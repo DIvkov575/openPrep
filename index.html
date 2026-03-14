@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sequence Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:         #f4f6ff;
+      --card:       #ffffff;
+      --border:     #e2e8f0;
+      --text:       #1e293b;
+      --muted:      #64748b;
+      --light:      #94a3b8;
+
+      --indigo:     #6366f1;
+      --indigo-d:   #4f46e5;
+      --indigo-l:   #eef2ff;
+      --indigo-t:   #4338ca;
+
+      --emerald:    #10b981;
+      --emerald-d:  #059669;
+      --emerald-l:  #ecfdf5;
+
+      --amber:      #f59e0b;
+      --amber-l:    #fffbeb;
+
+      --rose:       #f43f5e;
+      --rose-l:     #fff1f2;
+
+      --sky:        #0ea5e9;
+      --sky-l:      #e0f2fe;
+
+      --r:  14px;
+      --rs: 10px;
+      --rx: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: var(--bg); }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px 56px;
+    }
+    .app { width: 100%; max-width: 640px; }
+
+    /* ── Shared card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .card-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-label-row .card-label { margin-bottom: 0; }
+    .badge {
+      background: var(--indigo-l);
+      color: var(--indigo-t);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    /* ── Screen header ── */
+    .screen-header { text-align: center; margin-bottom: 24px; }
+    .screen-title { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .screen-sub   { color: var(--muted); margin-top: 4px; font-size: 13px; }
+
+    /* ── Presets ── */
+    .preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--rs);
+      background: var(--card);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .preset-btn:hover { border-color: var(--indigo); color: var(--indigo-t); background: var(--indigo-l); }
+    .preset-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: var(--indigo-l);
+      color: var(--indigo);
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .preset-btn:hover .preset-icon { background: var(--indigo); color: white; }
+
+    /* ── Type chips ── */
+    .types-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .type-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--rx);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .type-chip:hover { border-color: var(--indigo); color: var(--text); background: var(--indigo-l); }
+    .type-chip.active { border-color: var(--indigo); color: var(--indigo-t); background: var(--indigo-l); font-weight: 500; }
+    .chip-check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 700;
+      transition: all .15s;
+    }
+    .type-chip.active .chip-check { border-color: var(--indigo); background: var(--indigo); color: white; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    .quick-links { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
+    .link-btn { background: none; border: none; color: var(--indigo); font-family: inherit; font-size: 12px; cursor: pointer; padding: 0; }
+    .link-btn:hover { text-decoration: underline; }
+    .dot { color: var(--light); }
+
+    /* ── Options row (radio-style pills) ── */
+    .opts-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .opt-btn {
+      padding: 7px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 99px;
+      background: var(--card);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .opt-btn:hover { border-color: var(--indigo); color: var(--text); }
+    .opt-btn.selected { border-color: var(--indigo); background: var(--indigo); color: white; font-weight: 600; }
+
+    /* ── Two-col card ── */
+    .row-card { display: flex; gap: 24px; }
+    .row-card > .col { flex: 1; min-width: 0; }
+
+    /* ── Start button ── */
+    .start-btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: var(--emerald);
+      color: white;
+      border: none;
+      border-radius: var(--r);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      letter-spacing: .01em;
+    }
+    .start-btn:hover:not(:disabled) { background: var(--emerald-d); transform: translateY(-1px); }
+    .start-btn:active:not(:disabled) { transform: translateY(0); }
+    .start-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Hint bar ── */
+    .hint-bar { text-align: center; color: var(--light); font-size: 12px; margin-top: 12px; }
+    .hint-bar kbd {
+      display: inline-block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-family: inherit;
+      font-size: 11px;
+      color: var(--muted);
+      box-shadow: 0 1px 0 var(--border);
+    }
+
+    /* ── Testing screen ── */
+    .status-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 20px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .status-item { display: flex; flex-direction: column; }
+    .status-item.center { align-items: center; }
+    .status-item.right  { align-items: flex-end; }
+    .status-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--light); margin-bottom: 2px; }
+    .status-val { font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .score-display { display: flex; align-items: baseline; gap: 3px; }
+    .score-correct { font-size: 1.5rem; font-weight: 700; color: var(--emerald); }
+    .score-sep     { font-size: 1.1rem; color: var(--light); }
+    .score-total   { font-size: 1.1rem; font-weight: 600; color: var(--muted); }
+
+    .type-badge {
+      display: inline-block;
+      background: var(--indigo-l);
+      color: var(--indigo-t);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      padding: 4px 12px;
+      border-radius: 99px;
+      margin-bottom: 4px;
+    }
+    .badge-row { text-align: center; margin-bottom: 4px; }
+
+    .sequence-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 22px 0 20px;
+    }
+    .term-card {
+      background: var(--indigo-l);
+      color: var(--indigo-t);
+      border-radius: var(--rs);
+      padding: 12px 16px;
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 700;
+      min-width: 52px;
+      text-align: center;
+      border: 1.5px solid #c7d2fe;
+    }
+    .blank-card {
+      background: white;
+      border: 2.5px dashed var(--indigo);
+      color: var(--indigo);
+      border-radius: var(--rs);
+      padding: 12px 16px;
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 700;
+      min-width: 52px;
+      text-align: center;
+      opacity: .6;
+    }
+
+    .input-wrap { display: flex; justify-content: center; padding: 8px 0; }
+    .answer-input {
+      width: 220px;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: var(--r);
+      font-family: inherit;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      letter-spacing: .04em;
+    }
+    .answer-input::placeholder { color: var(--light); font-weight: 400; font-size: 1rem; }
+    .answer-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .action-btn {
+      padding: 9px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--rs);
+      background: var(--card);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .action-btn:hover:not(:disabled) { border-color: var(--indigo); color: var(--indigo-t); background: var(--indigo-l); }
+    .action-btn:disabled { opacity: .4; cursor: default; }
+    .action-btn.submit {
+      background: var(--indigo);
+      border-color: var(--indigo);
+      color: white;
+      font-weight: 600;
+    }
+    .action-btn.submit:hover:not(:disabled) { background: var(--indigo-d); border-color: var(--indigo-d); color: white; }
+    .action-btn.end:hover:not(:disabled) { border-color: var(--rose); color: var(--rose); background: var(--rose-l); }
+
+    .timer-section { margin-top: 8px; }
+    .timer-bar {
+      height: 8px;
+      background: #f1f5f9;
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .timer-fill { height: 100%; border-radius: 99px; transition: width .15s linear, background-color .5s; }
+    .timer-fill.green  { background: var(--emerald); }
+    .timer-fill.yellow { background: var(--amber); }
+    .timer-fill.red    { background: var(--rose); }
+    .timer-label { text-align: right; font-size: 11px; color: var(--light); margin-top: 5px; }
+
+    /* ── Results screen ── */
+    .results-header { text-align: center; margin-bottom: 24px; }
+    .results-icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .results-title { font-size: 1.5rem; font-weight: 700; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px 14px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .stat-val { font-size: 2.2rem; font-weight: 700; line-height: 1.1; }
+    .stat-val.green { color: var(--emerald); }
+    .stat-val.red   { color: var(--rose); }
+    .stat-val.blue  { color: var(--sky); }
+    .stat-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--light); margin-top: 6px; }
+
+    .results-btns { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+    .rbtn {
+      padding: 11px 32px;
+      border-radius: var(--rs);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .rbtn.primary { background: var(--indigo); color: white; border: 1.5px solid var(--indigo); }
+    .rbtn.primary:hover { background: var(--indigo-d); border-color: var(--indigo-d); }
+    .rbtn.secondary { background: white; color: var(--muted); border: 1.5px solid var(--border); }
+    .rbtn.secondary:hover { border-color: var(--rose); color: var(--rose); background: var(--rose-l); }
+
+    /* ── Quit screen ── */
+    .bye-screen { text-align: center; padding: 80px 20px; }
+    .bye-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+    .bye-text  { color: var(--muted); }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- ── App template ── -->
+<script type="x-template" id="tpl-app">
+<div class="app">
+  <config-screen  v-if="screen==='config'"  @start="onStart" @quit="onQuit"/>
+  <testing-screen v-else-if="screen==='testing'" :config="config" @end="onEnd"/>
+  <results-screen v-else-if="screen==='results'" :results="results" @restart="onRestart" @quit="onQuit"/>
+  <div v-else class="bye-screen">
+    <div class="bye-title">Thanks for practicing! 👋</div>
+    <div class="bye-text">Close this tab to exit.</div>
+  </div>
+</div>
+</script>
+
+<!-- ── Config template ── -->
+<script type="x-template" id="tpl-config">
+<div>
+  <div class="screen-header">
+    <h1 class="screen-title">Sequence Trainer</h1>
+    <p class="screen-sub">Configure your drill session</p>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" @click="applyPreset('optiver')">
+        <span class="preset-icon">O</span> Optiver
+      </button>
+      <button class="preset-btn" @click="applyPreset('flow')">
+        <span class="preset-icon">F</span> Flow Traders
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label-row">
+      <span class="card-label">Sequence Types</span>
+      <span class="badge">{{ types.size }} / {{ TYPES.length }} selected</span>
+    </div>
+    <div class="types-grid">
+      <label v-for="t in TYPES" :key="t" :class="['type-chip', { active: types.has(t) }]">
+        <input type="checkbox" :checked="types.has(t)" @change="toggleType(t)" class="sr-only">
+        <span class="chip-check">{{ types.has(t) ? '✓' : '' }}</span>
+        {{ t }}
+      </label>
+    </div>
+    <div class="quick-links">
+      <button class="link-btn" @click="selectAll">Select all</button>
+      <span class="dot">·</span>
+      <button class="link-btn" @click="selectNone">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Difficulty</div>
+    <div class="opts-row">
+      <button v-for="(lbl, i) in DIFF_LABELS" :key="lbl"
+              :class="['opt-btn', { selected: difficulty === DIFF_KEYS[i] }]"
+              @click="difficulty = DIFF_KEYS[i]">{{ lbl }}</button>
+    </div>
+  </div>
+
+  <div class="card row-card">
+    <div class="col">
+      <div class="card-label">Sequence Length</div>
+      <div class="opts-row">
+        <button v-for="l in LEN_OPTS" :key="l"
+                :class="['opt-btn', { selected: seqLen === l }]"
+                @click="seqLen = l">{{ l }} terms</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card-label">Time Limit</div>
+      <div class="opts-row">
+        <button v-for="t in TIME_OPTS" :key="t.s"
+                :class="['opt-btn', { selected: timeLimitS === t.s }]"
+                @click="timeLimitS = t.s">{{ t.label }}</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="start-btn" :disabled="!canStart" @click="doStart">
+    {{ canStart ? 'Start Session →' : 'Select at least one sequence type to start' }}
+  </button>
+
+  <div class="hint-bar">
+    <kbd>O</kbd> Optiver · <kbd>F</kbd> Flow Traders · <kbd>S</kbd> Start · <kbd>Q</kbd> Quit
+  </div>
+</div>
+</script>
+
+<!-- ── Testing template ── -->
+<script type="x-template" id="tpl-testing">
+<div>
+  <div class="status-bar">
+    <div class="status-item">
+      <span class="status-lbl">Elapsed</span>
+      <span class="status-val">{{ fmtTime(elapsed) }}</span>
+    </div>
+    <div class="status-item center">
+      <div class="score-display">
+        <span class="score-correct">{{ correct }}</span>
+        <span class="score-sep">/</span>
+        <span class="score-total">{{ total }}</span>
+      </div>
+      <span class="status-lbl">correct</span>
+    </div>
+    <div class="status-item right">
+      <span class="status-lbl">Remaining</span>
+      <span class="status-val">{{ fmtTime(remaining) }}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="badge-row">
+      <span class="type-badge">{{ question.type }}</span>
+    </div>
+    <div class="sequence-row">
+      <div v-for="(n, i) in question.visible" :key="i" class="term-card">{{ n }}</div>
+      <div class="blank-card">?</div>
+    </div>
+    <div class="input-wrap">
+      <input
+        ref="inputEl"
+        :value="answer"
+        @input="filterInput"
+        @keydown.enter.prevent="submit"
+        @keydown.escape.prevent="skip"
+        type="text"
+        inputmode="numeric"
+        class="answer-input"
+        placeholder="type answer…"
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </div>
+    <div class="action-row">
+      <button class="action-btn skip" @click="skip">Skip  <kbd>Esc</kbd></button>
+      <button class="action-btn submit" @click="submit" :disabled="!/\d/.test(answer)">Submit →</button>
+      <button class="action-btn end" @click="endSession">End Session</button>
+    </div>
+  </div>
+
+  <div class="timer-section">
+    <div class="timer-bar">
+      <div :class="['timer-fill', barClass]" :style="{ width: (pct * 100) + '%' }"></div>
+    </div>
+    <div class="timer-label">{{ fmtTime(remaining) }} remaining</div>
+  </div>
+</div>
+</script>
+
+<!-- ── Results template ── -->
+<script type="x-template" id="tpl-results">
+<div>
+  <div class="results-header">
+    <div class="results-icon">🎯</div>
+    <h2 class="results-title">Session Complete</h2>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val blue">{{ results.total }}</div>
+      <div class="stat-lbl">Questions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val green">{{ results.correct }}</div>
+      <div class="stat-lbl">Correct</div>
+    </div>
+    <div class="stat-card">
+      <div :class="['stat-val', parseFloat(acc) >= 70 ? 'green' : 'red']">{{ acc }}%</div>
+      <div class="stat-lbl">Accuracy</div>
+    </div>
+  </div>
+
+  <div class="results-btns">
+    <button class="rbtn primary" @click="$emit('restart')">↺ Restart</button>
+    <button class="rbtn secondary" @click="$emit('quit')">✕ Quit</button>
+  </div>
+
+  <div class="hint-bar">
+    <kbd>R</kbd> Restart · <kbd>Q</kbd> Quit
+  </div>
+</div>
+</script>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+
+// ─── Constants ───────────────────────────────────────────
+const TYPES      = ['Arithmetic','Geometric','Quadratic','Fibonacci','Tribonacci','Triangular','Squares','Cubes','Alternating'];
+const DIFF_KEYS  = ['easy','medium','hard'];
+const DIFF_LABELS= ['Easy','Medium','Hard'];
+const LEN_OPTS   = [5, 6, 7];
+const TIME_OPTS  = [{label:'1 min',s:60},{label:'5 min',s:300},{label:'10 min',s:600},{label:'15 min',s:900}];
+const PRESETS    = {
+  optiver: new Set(['Arithmetic','Geometric','Quadratic','Fibonacci','Tribonacci','Alternating']),
+  flow:    new Set(['Arithmetic','Geometric','Fibonacci','Squares','Cubes','Alternating']),
+};
+
+// ─── Utilities ───────────────────────────────────────────
+const rand    = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+const fmtTime = s => {
+  const n = Math.max(0, Math.floor(s));
+  return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
+};
+
+// ─── Generators ──────────────────────────────────────────
+function genArithmetic(diff, n) {
+  const [sMax,stMax] = {easy:[20,10],medium:[100,20],hard:[500,50]}[diff];
+  const start = rand(1, sMax), step = rand(1, stMax) * (Math.random() < .5 ? -1 : 1);
+  const t = i => start + i * step;
+  return { visible: Array.from({length:n},(_,i)=>t(i)), answer: t(n) };
+}
+function genGeometric(diff, n) {
+  const [sMax,rMax] = {easy:[10,3],medium:[20,4],hard:[50,5]}[diff];
+  for (let a = 0; a < 200; a++) {
+    const start = rand(1,sMax), ratio = rand(2,rMax);
+    const terms = Array.from({length:n+1},(_,i) => start * Math.pow(ratio,i));
+    if (terms.every(t => Math.abs(t) <= 1e6)) return { visible:terms.slice(0,n), answer:terms[n] };
+  }
+  return genGeometric('easy', n);
+}
+function genQuadratic(diff, n) {
+  const {A,B,C} = {easy:{A:[1,2],B:[0,3],C:[0,10]},medium:{A:[1,4],B:[0,5],C:[0,20]},hard:{A:[1,6],B:[0,10],C:[0,50]}}[diff];
+  const a=rand(...A),b=rand(...B),c=rand(...C), t=i=>a*(i+1)**2+b*(i+1)+c;
+  return { visible:Array.from({length:n},(_,i)=>t(i)), answer:t(n) };
+}
+function genFibonacci(diff, n) {
+  const max = {easy:5,medium:20,hard:50}[diff];
+  const seq = [rand(1,max), rand(1,max)];
+  while (seq.length < n+1) seq.push(seq[seq.length-1]+seq[seq.length-2]);
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genTribonacci(diff, n) {
+  const max = {easy:3,medium:10,hard:20}[diff];
+  const seq = [rand(1,max),rand(1,max),rand(1,max)];
+  while (seq.length < n+1) seq.push(seq[seq.length-1]+seq[seq.length-2]+seq[seq.length-3]);
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genTriangular(diff, n) {
+  const max = {easy:4,medium:8,hard:15}[diff];
+  const s = rand(1,max), T = k => k*(k+1)/2;
+  return { visible:Array.from({length:n},(_,i)=>T(s+i)), answer:T(s+n) };
+}
+function genSquares(diff, n) {
+  const max = {easy:4,medium:8,hard:12}[diff];
+  const s = rand(1,max);
+  return { visible:Array.from({length:n},(_,i)=>(s+i)**2), answer:(s+n)**2 };
+}
+function genCubes(diff, n) {
+  const max = {easy:3,medium:5,hard:8}[diff];
+  const s = rand(1,max);
+  return { visible:Array.from({length:n},(_,i)=>(s+i)**3), answer:(s+n)**3 };
+}
+function genAlternating(diff, n) {
+  const {aMax,bMin,bMax} = {easy:{aMax:15,bMin:10,bMax:50},medium:{aMax:30,bMin:10,bMax:100},hard:{aMax:100,bMin:10,bMax:200}}[diff];
+  const aS=rand(1,aMax),aT=rand(1,5),bS=rand(bMin,bMax),bT=rand(5,20);
+  const t = i => i%2===0 ? aS+Math.floor(i/2)*aT : bS+Math.floor(i/2)*bT;
+  return { visible:Array.from({length:n},(_,i)=>t(i)), answer:t(n) };
+}
+const GENS = { Arithmetic:genArithmetic,Geometric:genGeometric,Quadratic:genQuadratic,Fibonacci:genFibonacci,Tribonacci:genTribonacci,Triangular:genTriangular,Squares:genSquares,Cubes:genCubes,Alternating:genAlternating };
+function makeQuestion(config) {
+  const types = [...config.types];
+  const type  = types[rand(0, types.length-1)];
+  const { visible, answer } = GENS[type](config.difficulty, config.length);
+  return { type, visible, answer };
+}
+
+// ─── ConfigScreen ────────────────────────────────────────
+const ConfigScreen = {
+  template: '#tpl-config',
+  emits: ['start', 'quit'],
+  setup(_, { emit }) {
+    const types      = ref(new Set(TYPES));
+    const difficulty = ref('medium');
+    const seqLen     = ref(6);
+    const timeLimitS = ref(300);
+    const canStart   = computed(() => types.value.size > 0);
+
+    const toggleType  = t => { const s=new Set(types.value); s.has(t)?s.delete(t):s.add(t); types.value=s; };
+    const selectAll   = () => { types.value = new Set(TYPES); };
+    const selectNone  = () => { types.value = new Set(); };
+    const applyPreset = p => { types.value = new Set(PRESETS[p]); };
+    const doStart     = () => {
+      if (!canStart.value) return;
+      emit('start', { types:types.value, difficulty:difficulty.value, length:seqLen.value, timeLimitS:timeLimitS.value });
+    };
+
+    const onKey = e => {
+      if (e.ctrlKey||e.metaKey||e.altKey) return;
+      if (e.key==='s'||e.key==='S') doStart();
+      if (e.key==='o'||e.key==='O') applyPreset('optiver');
+      if (e.key==='f'||e.key==='F') applyPreset('flow');
+      if (e.key==='q'||e.key==='Q') emit('quit');
+    };
+    onMounted(()  => document.addEventListener('keydown', onKey));
+    onUnmounted(()=> document.removeEventListener('keydown', onKey));
+
+    return { TYPES, DIFF_KEYS, DIFF_LABELS, LEN_OPTS, TIME_OPTS, types, difficulty, seqLen, timeLimitS, canStart, toggleType, selectAll, selectNone, applyPreset, doStart };
+  },
+};
+
+// ─── TestingScreen ───────────────────────────────────────
+const TestingScreen = {
+  template: '#tpl-testing',
+  props: ['config'],
+  emits: ['end'],
+  setup(props, { emit }) {
+    const inputEl  = ref(null);
+    const answer   = ref('');
+    const question = ref(makeQuestion(props.config));
+    const correct  = ref(0);
+    const total    = ref(0);
+    const remaining= ref(props.config.timeLimitS);
+
+    const pct      = computed(() => remaining.value / props.config.timeLimitS);
+    const barClass = computed(() => pct.value > .5 ? 'green' : pct.value > .2 ? 'yellow' : 'red');
+    const elapsed  = computed(() => props.config.timeLimitS - remaining.value);
+
+    let ended = false;
+    const endSession = () => {
+      if (!ended) { ended=true; emit('end', {correct:correct.value, total:total.value}); }
+    };
+    const nextQ = () => {
+      answer.value = '';
+      question.value = makeQuestion(props.config);
+      nextTick(() => inputEl.value?.focus());
+    };
+    const submit = () => {
+      if (!/\d/.test(answer.value)) return;
+      const val = parseInt(answer.value, 10);
+      if (!isNaN(val) && val === question.value.answer) correct.value++;
+      total.value++;
+      nextQ();
+    };
+    const skip = () => { total.value++; nextQ(); };
+
+    const filterInput = e => {
+      let v = e.target.value.replace(/[^0-9\-]/g, '');
+      if (v.length > 1) v = v[0] + v.slice(1).replace(/-/g,'');
+      e.target.value = v;
+      answer.value = v;
+    };
+
+    const endTime = Date.now() + props.config.timeLimitS * 1000;
+    const tid = setInterval(() => {
+      const rem = (endTime - Date.now()) / 1000;
+      if (rem <= 0) { clearInterval(tid); remaining.value=0; endSession(); }
+      else remaining.value = rem;
+    }, 100);
+
+    const onKey = e => {
+      if ((e.key==='q'||e.key==='Q') && document.activeElement !== inputEl.value) endSession();
+    };
+    onMounted(() => { document.addEventListener('keydown', onKey); inputEl.value?.focus(); });
+    onUnmounted(() => { document.removeEventListener('keydown', onKey); clearInterval(tid); });
+
+    return { inputEl, answer, question, correct, total, remaining, pct, barClass, elapsed, submit, skip, endSession, filterInput, fmtTime };
+  },
+};
+
+// ─── ResultsScreen ───────────────────────────────────────
+const ResultsScreen = {
+  template: '#tpl-results',
+  props: ['results'],
+  emits: ['restart','quit'],
+  setup(props, { emit }) {
+    const acc = computed(() =>
+      props.results.total > 0
+        ? (props.results.correct / props.results.total * 100).toFixed(1)
+        : '0.0'
+    );
+    const onKey = e => {
+      if (e.key==='r'||e.key==='R') emit('restart');
+      if (e.key==='q'||e.key==='Q') emit('quit');
+    };
+    onMounted(()  => document.addEventListener('keydown', onKey));
+    onUnmounted(()=> document.removeEventListener('keydown', onKey));
+    return { acc };
+  },
+};
+
+// ─── App ─────────────────────────────────────────────────
+const App = {
+  template: '#tpl-app',
+  components: { ConfigScreen, TestingScreen, ResultsScreen },
+  setup() {
+    const screen  = ref('config');
+    const config  = ref(null);
+    const results = ref(null);
+
+    const onStart   = cfg => { config.value=cfg; screen.value='testing'; };
+    const onEnd     = res => { results.value=res; screen.value='results'; };
+    const onRestart = ()  => { results.value=null; screen.value='config'; };
+    const onQuit    = ()  => { screen.value='quit'; };
+
+    return { screen, config, results, onStart, onEnd, onRestart, onQuit };
+  },
+};
+
+createApp(App).mount('#app');
+</script>
+</body>
+</html>
