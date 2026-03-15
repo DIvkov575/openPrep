@@ -286,6 +286,11 @@
       opacity: .6;
     }
 
+    /* ── Fraction stacked display ── */
+    .frac-wrap { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+    .frac-num  { border-bottom: 1.5px solid currentColor; padding: 0 4px 2px; }
+    .frac-den  { padding: 2px 4px 0; }
+
     .input-wrap { display: flex; justify-content: center; padding: 8px 0; }
     .answer-input {
       width: 220px;
@@ -514,7 +519,15 @@
       <span class="type-badge">{{ question.type }}</span>
     </div>
     <div class="sequence-row">
-      <div v-for="(n, i) in question.visible" :key="i" class="term-card">{{ n }}</div>
+      <div v-for="(n, i) in question.visible" :key="i" class="term-card">
+        <template v-if="String(n).includes('/')">
+          <div class="frac-wrap">
+            <span class="frac-num">{{ String(n).split('/')[0] }}</span>
+            <span class="frac-den">{{ String(n).split('/')[1] }}</span>
+          </div>
+        </template>
+        <template v-else>{{ n }}</template>
+      </div>
       <div class="blank-card">?</div>
     </div>
     <div class="input-wrap">
@@ -525,7 +538,6 @@
         @keydown.enter.prevent="submit"
         @keydown.escape.prevent="skip"
         type="text"
-        inputmode="numeric"
         class="answer-input"
         placeholder="type answer…"
         autocomplete="off"
@@ -587,14 +599,14 @@
 const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
 
 // ─── Constants ───────────────────────────────────────────
-const TYPES      = ['Arithmetic','Geometric','Quadratic','Fibonacci','Tribonacci','Triangular','Squares','Cubes','Alternating'];
+const TYPES      = ['Arithmetic','Geometric','Quadratic','Fibonacci','Tribonacci','Triangular','Squares','Cubes','Alternating','Prime Diffs','Geo Diffs','Fib Diffs','Prime Stride','Recurrence','Frac Dual','Frac Chain','Frac Fib'];
 const DIFF_KEYS  = ['easy','medium','hard'];
 const DIFF_LABELS= ['Easy','Medium','Hard'];
 const LEN_OPTS   = [5, 6, 7];
 const TIME_OPTS  = [{label:'1 min',s:60},{label:'5 min',s:300},{label:'10 min',s:600},{label:'15 min',s:900}];
 const PRESETS    = {
   optiver: new Set(['Arithmetic','Geometric','Quadratic','Fibonacci','Tribonacci','Alternating']),
-  flow:    new Set(['Arithmetic','Geometric','Fibonacci','Squares','Cubes','Alternating']),
+  flow:    new Set(['Quadratic','Prime Diffs','Geo Diffs','Fib Diffs','Prime Stride','Recurrence','Frac Dual','Frac Chain','Frac Fib']),
 };
 
 // ─── Utilities ───────────────────────────────────────────
@@ -603,6 +615,23 @@ const fmtTime = s => {
   const n = Math.max(0, Math.floor(s));
   return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
 };
+
+// ─── Primes sieve ────────────────────────────────────────
+const PRIMES = (limit => {
+  const s = new Uint8Array(limit+1).fill(1); s[0]=s[1]=0;
+  for(let i=2;i*i<=limit;i++) if(s[i]) for(let j=i*i;j<=limit;j+=i) s[j]=0;
+  return Array.from({length:limit+1},(_,i)=>i).filter(i=>s[i]);
+})(500); // 95 primes
+
+// ─── Fraction utilities ──────────────────────────────────
+function parseFrac(s) {
+  const parts = String(s).split('/');
+  return parts.length===1 ? [parseInt(parts[0],10),1] : [parseInt(parts[0],10),parseInt(parts[1],10)];
+}
+function fracEqual(user, correct) {
+  const [ua,ub]=parseFrac(user), [ca,cb]=parseFrac(correct);
+  return (ua*cb)===(ca*ub);
+}
 
 // ─── Generators ──────────────────────────────────────────
 function genArithmetic(diff, n) {
@@ -658,7 +687,94 @@ function genAlternating(diff, n) {
   const t = i => i%2===0 ? aS+Math.floor(i/2)*aT : bS+Math.floor(i/2)*bT;
   return { visible:Array.from({length:n},(_,i)=>t(i)), answer:t(n) };
 }
-const GENS = { Arithmetic:genArithmetic,Geometric:genGeometric,Quadratic:genQuadratic,Fibonacci:genFibonacci,Tribonacci:genTribonacci,Triangular:genTriangular,Squares:genSquares,Cubes:genCubes,Alternating:genAlternating };
+function genPrimeDiffs(diff, n) {
+  const cfg = {easy:{startMax:10,offMax:0},medium:{startMax:50,offMax:4},hard:{startMax:100,offMax:8}}[diff];
+  const start = rand(1, cfg.startMax), off = rand(0, cfg.offMax);
+  const seq = [start];
+  for(let i=0;i<n;i++) seq.push(seq[seq.length-1]+PRIMES[off+i]);
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genGeoDiffs(diff, n) {
+  const cfg = {easy:{d0Max:5,rMin:2,rMax:2},medium:{d0Max:10,rMin:2,rMax:3},hard:{d0Max:20,rMin:2,rMax:4}}[diff];
+  for(let a=0;a<200;a++) {
+    const start=rand(1,20), d0=rand(1,cfg.d0Max), r=rand(cfg.rMin,cfg.rMax);
+    const seq=[start];
+    for(let i=0;i<n;i++) seq.push(seq[seq.length-1]+d0*Math.pow(r,i));
+    if(seq.every(t=>Number.isInteger(t)&&Math.abs(t)<=1e6)) return { visible:seq.slice(0,n), answer:seq[n] };
+  }
+  return genGeoDiffs('easy',n);
+}
+function genFibDiffs(diff, n) {
+  const cfg = {easy:{startMax:5,seedMax:3},medium:{startMax:20,seedMax:8},hard:{startMax:50,seedMax:15}}[diff];
+  for(let a=0;a<200;a++) {
+    const start=rand(1,cfg.startMax), ds=[rand(1,cfg.seedMax),rand(1,cfg.seedMax)];
+    while(ds.length<n) ds.push(ds[ds.length-1]+ds[ds.length-2]);
+    const seq=[start];
+    for(let i=0;i<n;i++) seq.push(seq[seq.length-1]+ds[i]);
+    if(seq.every(t=>Math.abs(t)<=1e6)) return { visible:seq.slice(0,n), answer:seq[n] };
+  }
+  return genFibDiffs('easy',n);
+}
+function genPrimeStride(diff, n) {
+  const idxMax = {easy:5,medium:10,hard:15}[diff];
+  const startIdx=rand(0,idxMax), stride=2;
+  const seq=[];
+  for(let i=0;i<=n;i++) seq.push(PRIMES[startIdx+stride*i]);
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genRecurrence(diff, n) {
+  const cfg = {easy:{seedMax:5,kMin:2,kMax:3},medium:{seedMax:10,kMin:2,kMax:5},hard:{seedMax:20,kMin:2,kMax:7}}[diff];
+  for(let a=0;a<200;a++) {
+    const a0=rand(1,cfg.seedMax), a1=rand(1,cfg.seedMax), k=rand(cfg.kMin,cfg.kMax);
+    const seq=[a0,a1];
+    while(seq.length<=n) seq.push(k*seq[seq.length-1]+seq[seq.length-2]);
+    if(seq.every(t=>Math.abs(t)<=1e6)) return { visible:seq.slice(0,n), answer:seq[n] };
+  }
+  return genRecurrence('easy',n);
+}
+function genFracDual(diff, n) {
+  const cfg = {easy:{nsMax:5,altMin:1,altMax:1},medium:{nsMax:9,altMin:1,altMax:3},hard:{nsMax:15,altMin:1,altMax:4}}[diff];
+  const nu=rand(1,10), ns=rand(1,cfg.nsMax), ds1=rand(cfg.altMin,cfg.altMax), ds2=rand(cfg.altMin,cfg.altMax);
+  let den=rand(2,8);
+  const seq=[];
+  for(let i=0;i<=n;i++) {
+    seq.push(`${nu+i*ns}/${den}`);
+    den += (i%2===0) ? ds1 : ds2;
+  }
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genFracChain(diff, n) {
+  const cfg = {easy:{initStep:2,every:4},medium:{initStep:2,every:2},hard:{initStep:3,every:2}}[diff];
+  let num=rand(1,5), den=num+rand(1,6), step=cfg.initStep;
+  const seq=[];
+  for(let i=0;i<=n;i++) {
+    seq.push(`${num}/${den}`);
+    const nextNum=den;
+    den=den+step;
+    if((i+1)%cfg.every===0) step*=2;
+    num=nextNum;
+  }
+  return { visible:seq.slice(0,n), answer:seq[n] };
+}
+function genFracFib(diff, n) {
+  const seedMax = {easy:5,medium:10,hard:20}[diff];
+  for(let a=0;a<200;a++) {
+    const ns=[rand(1,seedMax),rand(1,seedMax)], ds=[rand(1,seedMax),rand(1,seedMax)];
+    while(ns.length<=n) { ns.push(ns[ns.length-1]+ns[ns.length-2]); ds.push(ds[ds.length-1]+ds[ds.length-2]); }
+    if(ns[n]<=1000&&ds[n]<=1000) {
+      return { visible:Array.from({length:n},(_,i)=>`${ns[i]}/${ds[i]}`), answer:`${ns[n]}/${ds[n]}` };
+    }
+  }
+  return genFracFib('easy',n);
+}
+const GENS = {
+  Arithmetic:genArithmetic, Geometric:genGeometric, Quadratic:genQuadratic,
+  Fibonacci:genFibonacci, Tribonacci:genTribonacci, Triangular:genTriangular,
+  Squares:genSquares, Cubes:genCubes, Alternating:genAlternating,
+  'Prime Diffs':genPrimeDiffs, 'Geo Diffs':genGeoDiffs, 'Fib Diffs':genFibDiffs,
+  'Prime Stride':genPrimeStride, Recurrence:genRecurrence,
+  'Frac Dual':genFracDual, 'Frac Chain':genFracChain, 'Frac Fib':genFracFib,
+};
 function makeQuestion(config) {
   const types = [...config.types];
   const type  = types[rand(0, types.length-1)];
@@ -728,16 +844,17 @@ const TestingScreen = {
     };
     const submit = () => {
       if (!/\d/.test(answer.value)) return;
-      const val = parseInt(answer.value, 10);
-      if (!isNaN(val) && val === question.value.answer) correct.value++;
+      if (fracEqual(answer.value, question.value.answer)) correct.value++;
       total.value++;
       nextQ();
     };
     const skip = () => { total.value++; nextQ(); };
 
     const filterInput = e => {
-      let v = e.target.value.replace(/[^0-9\-]/g, '');
-      if (v.length > 1) v = v[0] + v.slice(1).replace(/-/g,'');
+      let v = e.target.value.replace(/[^0-9\-\/]/g, '');
+      if (v.length > 1) v = v[0] + v.slice(1).replace(/-/g, '');
+      const si = v.indexOf('/');
+      if (si !== -1) v = v.slice(0, si+1) + v.slice(si+1).replace(/\//g, '');
       e.target.value = v;
       answer.value = v;
     };
