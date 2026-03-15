@@ -8,30 +8,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:         #f4f6ff;
+      --bg:         #f4f3f1;
       --card:       #ffffff;
-      --border:     #e2e8f0;
-      --text:       #1e293b;
-      --muted:      #64748b;
-      --light:      #94a3b8;
+      --border:     #e5e3df;
+      --text:       #1f1f1e;
+      --muted:      #6e6e6b;
+      --light:      #a8a8a4;
 
-      --indigo:     #6366f1;
-      --indigo-d:   #4f46e5;
-      --indigo-l:   #eef2ff;
-      --indigo-t:   #4338ca;
+      --indigo:     #6b7fa3;
+      --indigo-d:   #52637f;
+      --indigo-l:   #eef0f6;
+      --indigo-t:   #3d4f6b;
 
-      --emerald:    #10b981;
-      --emerald-d:  #059669;
-      --emerald-l:  #ecfdf5;
+      --emerald:    #7a9e7e;
+      --emerald-d:  #5f7f63;
+      --emerald-l:  #eff5f0;
 
-      --amber:      #f59e0b;
-      --amber-l:    #fffbeb;
+      --amber:      #b89555;
+      --amber-l:    #f9f5e8;
 
-      --rose:       #f43f5e;
-      --rose-l:     #fff1f2;
+      --rose:       #a87070;
+      --rose-l:     #f7eeee;
 
-      --sky:        #0ea5e9;
-      --sky-l:      #e0f2fe;
+      --sky:        #6b96b3;
+      --sky-l:      #edf3f7;
 
       --r:  14px;
       --rs: 10px;
@@ -271,7 +271,7 @@
       font-weight: 700;
       min-width: 52px;
       text-align: center;
-      border: 1.5px solid #c7d2fe;
+      border: 1.5px solid #ced5e3;
     }
     .blank-card {
       background: white;
@@ -308,7 +308,7 @@
       letter-spacing: .04em;
     }
     .answer-input::placeholder { color: var(--light); font-weight: 400; font-size: 1rem; }
-    .answer-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    .answer-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(107,127,163,.15); }
 
     .action-row {
       display: flex;
@@ -515,9 +515,6 @@
   </div>
 
   <div class="card">
-    <div class="badge-row">
-      <span class="type-badge">{{ question.type }}</span>
-    </div>
     <div class="sequence-row">
       <div v-for="(n, i) in question.visible" :key="i" class="term-card">
         <template v-if="String(n).includes('/')">
